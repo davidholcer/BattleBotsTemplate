@@ -1,0 +1,13 @@
+services:
+  main_detector:
+    build: ./DetectorAutomation
+    depends_on:
+      - detector
+    environment:
+      - BASE_URL=http://host.docker.internal:3000
+      - DETECTOR_SERVICE_URL=http://detector:5001
+  
+  detector:
+    build: ./DetectorCode
+    ports:
+      - "5001:5001"

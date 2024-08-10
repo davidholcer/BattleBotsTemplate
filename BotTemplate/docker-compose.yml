@@ -1,0 +1,13 @@
+services:
+  main_bot:
+    build: ./BotAutomation
+    depends_on:
+      - bot
+    environment:
+      - BASE_URL=http://host.docker.internal:3000
+      - BOT_SERVICE_URL=http://bot:5001
+  
+  bot:
+    build: ./BotCode
+    ports:
+      - "5001:5001"

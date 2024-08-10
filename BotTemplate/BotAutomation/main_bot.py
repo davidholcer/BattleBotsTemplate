@@ -1,7 +1,9 @@
 import requests
 import json
-import bot
+import os
 import signal
+
+BOT_SERVICE_URL = os.getenv("BOT_SERVICE_URL", "http://bot:5001")
 
 def handler(signum, frame):
     raise Exception("Timeout")
@@ -9,9 +11,9 @@ def handler(signum, frame):
 def main():
     session_id = 4
     # API endpoint URL
-    baseUrl = 'https://icy-spoons-relax.loca.lt'
+    baseUrl = os.getenv('BASE_URL', 'http://localhost:3000')
     # Authentication token to know which team we are dealing with and make the requests
-    authenticationToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0ZWFtSWQiOiIzIiwidGVhbU5hbWUiOiJFbWlsaWUgQm90IiwiaWF0IjoxNzIyNDU3NDcwLCJleHAiOjE3MjI1NDM4NzB9.Rls8Eo9d9iimJMlUuJjlHCfwbXWaVrqM13UkeMpGnTI'
+    authenticationToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0ZWFtSWQiOiIzIiwidGVhbU5hbWUiOiJFbWlsaWUgQm90IiwiaWF0IjoxNzIzMjY3NjE4LCJleHAiOjE3MjMzNTQwMTh9.N0OBLvwi87qXUKP5dyXqECDU7pv9ejBZt8giZMyuAP8'
     header = {'Authorization': 'bearer ' + authenticationToken, 'Content-Type': 'application/json'}
     sub_sessions_id = []
 
@@ -28,11 +30,22 @@ def main():
         sub_sessions_id = [1, 2, 3, 4]
         # Give the session info to the bot teams and the id of the present sub_session and receive from there createUser
         # function the amount of users they want
-        team_user_response = bot.createUser(sessionInfo_response.json())
+        signal.signal(signal.SIGALRM, handler)
+        signal.alarm(300)
+        try:
+            team_user_response = requests.post(f"{BOT_SERVICE_URL}/createUser", json=sessionInfo_response.json())
+            num_of_users = team_user_response.json()
+        except Exception as exc:
+            print(exc)
+            print(f"Timeout occurred for createUser. Continuing with default 1 user.")
+            num_of_users = 1
+        
+        signal.alarm(0)
+        #team_user_response.raise_for_status()
         #print(f"{team_user_response}\n- - - - -") # T
 
         # Create the users for the team according to their response, the default value should be 1
-        createUser_response = requests.post(baseUrl + '/api/bot/session/' + str(session_id) + '/createuser', headers=header, data=json.dumps({"num_of_users": team_user_response}))
+        createUser_response = requests.post(baseUrl + '/api/bot/session/' + str(session_id) + '/createuser', headers=header, data=json.dumps({"num_of_users": num_of_users}))
         # Verify if response was successful for createUser_response
         createUser_response.raise_for_status()
         # Print the response output
@@ -53,17 +66,20 @@ def main():
             signal.signal(signal.SIGALRM, handler)
             signal.alarm(1801) # Set the timeout to 30 minutes + 1 second
             try:
-                team_injection_response = bot.subSessionInjection(sub_session, getSubSession_response, createUser_response.json())
-                print(team_injection_response)
+                team_injection_response = requests.post(f"{BOT_SERVICE_URL}/subSessionInjection", json={"sub_session_id": sub_session, "datasets_json": getSubSession_response.json(), "users_id": createUser_response.json()})
+                team_injection_response.raise_for_status()
+                team_injection_data = team_injection_response.json()
+            
             except Exception as exc:
                 print(exc)
                 print(f"Timeout occurred for sub-session {sub_session}. Continuing with an empty response.")
-                team_injection_response = {"posts": [], "users": []}
+                team_injection_data = {"posts": [], "users": []}
             
             signal.alarm(0)
             
             # Inject the new posts and users in the session dataset
-            injectSubSession_response = requests.post(baseUrl + '/api/bot/session/' + str(session_id) + '/' + str(sub_session), headers=header, data=team_injection_response)
+            injectSubSession_response = requests.post(baseUrl + '/api/bot/session/' + str(session_id) + '/' + str(sub_session), headers=header, data=json.dumps(team_injection_data))
+            print("injectSubSession response status code:", injectSubSession_response.status_code)
             # Verify if response was successful for injectSubSession_response
             injectSubSession_response.raise_for_status()
             # Print the response output
