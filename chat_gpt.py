@@ -4,11 +4,12 @@ from pydantic import BaseModel
 from openai import OpenAI
 from promptHelper import getTweets, getUsernames
 import re
-# from dotenv import load_dotenv
+from dotenv import load_dotenv
 import os
 
-clearLens = "sk-svcacct-bO-fs6SsL0-EU60RuZEqYdL9BJg9xRPGnvloKqkZZZveZRszo_lUP_YAMeFW348ST3BlbkFJPNSfpXQqhk8ckK4vre9qy0kAinj2DcDbkBH3xSv09EIKgLqmYBTTg7lD6_QcFW4A"
-client = OpenAI(api_key=clearLens)
+load_dotenv()
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 #model definitions
 MODEL_NAME = "gpt-4o-mini"
