@@ -15,7 +15,7 @@ session_id = int(os.getenv('SESSION_ID'))
 code_max_time = int(os.getenv('MAX_TIME'))
 
 # Testing Environment Variables
-# session_id = 2
+# session_id = 1
 # code_max_time = 3601
 
 logging.basicConfig(
@@ -47,7 +47,7 @@ def main():
         # Print the response output
         logging.info(f"Session Info response status code: {session_info_response.status_code}")
         print("Session Info response status code:", session_info_response.status_code)
-        #print(f"Session Info output: {json.dumps(session_info_response.json(), indent=4)}\n- - - - -")
+        # print(f"Session Info output: {json.dumps(session_info_response.json(), indent=4)}\n- - - - -")
 
         # Give the session info to the bot teams and the id of the present sub_session and receive from their create_user
         # function their new users

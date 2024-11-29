@@ -18,3 +18,6 @@ def divide_into_random_subarrays(arr, n):
     subarrays = [arr[i:j] for i, j in zip([0] + split_points, split_points + [len(arr)])]
     
     return subarrays
+
+
+# print(divide_into_random_subarrays([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],4))
